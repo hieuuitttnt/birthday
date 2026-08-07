@@ -327,6 +327,18 @@ body.co-nhac .song span:nth-child(2){animation-delay:.22s}
 body.co-nhac .song span:nth-child(3){animation-delay:.44s}
 body.co-nhac .song span:nth-child(4){animation-delay:.15s}
 @keyframes nhun{from{height:4px}to{height:14px}}
+#nut-nhac.nhac-toi::after{
+  content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(255,224,168,.6);animation:lan-toa 2.2s ease-out infinite}
+@keyframes lan-toa{from{transform:scale(.85);opacity:.8}to{transform:scale(1.5);opacity:0}}
+#mach{
+  position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;
+  max-width:min(260px,70vw);padding:12px 16px;border-radius:12px;
+  background:rgba(10,8,28,.88);backdrop-filter:blur(8px);
+  border:1px solid rgba(246,185,94,.28);color:var(--kem);
+  font-size:.78rem;line-height:1.5;opacity:0;transform:translateY(8px);
+  pointer-events:none;transition:opacity .5s ease,transform .5s ease}
+#mach.hien-mach{opacity:1;transform:none}
 
 /* ---------- Responsive tinh chỉnh ---------- */
 @media(max-width:640px){
@@ -390,7 +402,7 @@ body.co-nhac .song span:nth-child(4){animation-delay:.15s}
   <div class="liem" aria-hidden="true"></div>
   <h2 id="chao">Có một bầu trời đang đợi em</h2>
   <button id="nut-vao" type="button">Mở ra</button>
-  <small>Nhớ bật loa nhé</small>
+  <small>Bật loa và tắt chế độ im lặng nhé</small>
 </div>
 
 <header>
@@ -445,6 +457,8 @@ body.co-nhac .song span:nth-child(4){animation-delay:.15s}
 
 <div id="xem-anh" role="dialog" aria-label="Ảnh phóng to"><img id="anh-to" alt="Ảnh hai đứa"></div>
 
+<div id="mach" role="status"></div>
+
 <button id="nut-nhac" type="button" aria-label="Bật tắt nhạc" aria-pressed="false">
   <span class="song"><span></span><span></span><span></span><span></span></span>
 </button>
@@ -479,7 +493,7 @@ const CAU_HINH = {
     "Anh thích cách em cười khi em quên mất là có người đang nhìn.",
     "Em làm những ngày rất bình thường của anh trở nên đáng nhớ.",
     "Anh nhớ em cả những lúc em vừa mới rời đi được năm phút.",
-    "Em là người đầu tiên anh muốn kể, mọi chuyện.",
+    "Em là người đầu tiên anh muốn bảo vệ <3.",
     "Anh tự hào về em hơn cả những gì anh nói ra được.",
     "Dù sau này đi đâu, anh vẫn muốn về phía có em.",
     "Chúc em một tuổi mới thật nhiều điều tốt lành, và có anh ở trong đó."
@@ -627,6 +641,10 @@ function taoAudio(){
   rev.buffer = b;
   const wet = AC.createGain(); wet.gain.value = .5;
   bus.connect(rev); rev.connect(wet); wet.connect(master);
+  // iOS: phải phát một mẩu âm thanh ngay trong cú chạm thì mới mở khoá được
+  const im = AC.createBufferSource();
+  im.buffer = AC.createBuffer(1, 1, 22050);
+  im.connect(AC.destination); im.start(0);
 }
 function not(f, t, dai, g, loai, tan){
   const o = AC.createOscillator(), gn = AC.createGain();
@@ -651,7 +669,14 @@ function xepMotVong(t0){
 }
 function chay(){
   let t = AC.currentTime + .12;
-  const vong = () => { xepMotVong(t); t += BAR * 8; hen = setTimeout(vong, BAR * 8 * 1000 - 260); };
+  const vong = () => {
+    // trình duyệt trên điện thoại hay bóp setTimeout khi tắt màn hình,
+    // làm mốc thời gian tụt lại phía sau -> phải kéo lại, không thì mất tiếng luôn
+    if (t < AC.currentTime + .05) t = AC.currentTime + .12;
+    xepMotVong(t);
+    t += BAR * 8;
+    hen = setTimeout(vong, BAR * 8 * 1000 - 260);
+  };
   vong();
 }
 function chuong(){ // tiếng leng keng khi thổi nến xong
@@ -661,16 +686,19 @@ function chuong(){ // tiếng leng keng khi thổi nến xong
 }
 function batNhac(){
   if (CAU_HINH.fileNhac){
-    if (!tAudio){ tAudio = new Audio(CAU_HINH.fileNhac); tAudio.loop = true; tAudio.volume = 0; }
+    if (!tAudio){ tAudio = new Audio(CAU_HINH.fileNhac); tAudio.loop = true;
+      tAudio.preload = "auto"; tAudio.playsInline = true; tAudio.volume = 0; }
     tAudio.play().catch(()=>{});
     let v = 0; const id = setInterval(() => { v = Math.min(.6, v + .03); tAudio.volume = v;
       if (v >= .6) clearInterval(id); }, 80);
   } else {
     if (!AC) taoAudio();
-    AC.resume();
+    if (AC.state !== "running") AC.resume().catch(()=>{});
     if (!hen) chay();
-    master.gain.cancelScheduledValues(AC.currentTime);
-    master.gain.linearRampToValueAtTime(.22, AC.currentTime + 2.5);
+    const gio = AC.currentTime;
+    master.gain.cancelScheduledValues(gio);
+    master.gain.setValueAtTime(Math.max(master.gain.value, .0001), gio);
+    master.gain.linearRampToValueAtTime(.22, gio + 2.5);
   }
   dangPhat = true;
   document.body.classList.add("co-nhac");
@@ -678,11 +706,25 @@ function batNhac(){
 }
 function tatNhac(){
   if (tAudio) tAudio.pause();
-  if (AC && master) master.gain.linearRampToValueAtTime(.0001, AC.currentTime + .6);
+  if (AC && master){
+    const gio = AC.currentTime;
+    master.gain.cancelScheduledValues(gio);
+    master.gain.setValueAtTime(master.gain.value, gio);
+    master.gain.linearRampToValueAtTime(.0001, gio + .6);
+  }
   dangPhat = false;
   document.body.classList.remove("co-nhac");
   document.getElementById("nut-nhac").setAttribute("aria-pressed", "false");
 }
+/* điện thoại hay treo audio khi khoá màn hình hoặc chuyển app -> chạm lại là chạy tiếp */
+function hoiPhuc(){
+  if (!dangPhat) return;
+  if (AC && AC.state === "suspended") AC.resume().catch(()=>{});
+  if (tAudio && tAudio.paused) tAudio.play().catch(()=>{});
+}
+["pointerdown","touchend","keydown"].forEach(e => addEventListener(e, hoiPhuc, { passive:true }));
+addEventListener("visibilitychange", () => { if (!document.hidden) hoiPhuc(); });
+addEventListener("pageshow", hoiPhuc);
 document.getElementById("nut-nhac").addEventListener("click", () => dangPhat ? tatNhac() : batNhac());
 
 /* ---------- Mở màn ---------- */
@@ -691,6 +733,19 @@ document.getElementById("nut-vao").addEventListener("click", () => {
   document.body.classList.add("vao");
   batNhac();
   setTimeout(saoBang, 3000);
+
+  const nut = document.getElementById("nut-nhac"), mach = document.getElementById("mach");
+  nut.classList.add("nhac-toi");
+  setTimeout(() => nut.classList.remove("nhac-toi"), 12000);
+  setTimeout(() => {
+    const chuaChay = (!CAU_HINH.fileNhac && (!AC || AC.state !== "running")) ||
+                     (CAU_HINH.fileNhac && tAudio && tAudio.paused);
+    mach.textContent = chuaChay
+      ? "Chưa nghe thấy nhạc à? Chạm vào nút tròn bên dưới nhé."
+      : "Nếu im lặng, kiểm tra gạt chuông bên hông máy giúp mình nha.";
+    mach.classList.add("hien-mach");
+    setTimeout(() => mach.classList.remove("hien-mach"), 8000);
+  }, 2600);
 }, { once: true });
 
 /* ---------- Nến ---------- */
