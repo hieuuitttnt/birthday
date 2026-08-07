@@ -34,6 +34,7 @@ body{
 body::before{
   content:"";position:fixed;inset:0;z-index:-6;
   background:
+    radial-gradient(70% 34% at 50% 104%, rgba(246,185,94,.30) 0%, rgba(246,185,94,.10) 42%, transparent 72%),
     radial-gradient(130% 60% at 50% 116%, var(--chan-troi) 0%, transparent 60%),
     radial-gradient(90% 55% at 10% 6%, #261c50 0%, transparent 55%),
     linear-gradient(180deg, var(--troi-sau) 0%, var(--troi-giua) 52%, #251c46 100%);
@@ -74,11 +75,24 @@ body::before{
 .trang{
   position:absolute;top:9vh;right:9vw;
   width:clamp(200px,44vmin,470px);aspect-ratio:1;border-radius:50%;
-  background:radial-gradient(circle at 36% 32%, #FFFCF2 0%, #F4E6C9 44%, #D6C09A 100%);
-  box-shadow:0 0 120px 36px rgba(244,230,201,.22), 0 0 300px 120px rgba(244,230,201,.11);
+  background:radial-gradient(circle at 36% 32%, #FFF6DF 0%, #F7DFA8 42%, #E2B871 100%);
+  box-shadow:0 0 90px 24px rgba(246,200,120,.34),
+             0 0 220px 80px rgba(246,185,94,.20),
+             0 0 420px 180px rgba(246,185,94,.10);
   will-change:transform,opacity;
 }
-.trang i{position:absolute;border-radius:50%;background:#584a2f;opacity:.07;display:block}
+.trang::after{
+  content:"";position:absolute;left:50%;top:50%;
+  width:280%;height:280%;transform:translate(-50%,-50%);
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle, rgba(246,185,94,.26) 0%, rgba(246,185,94,.10) 34%, transparent 66%);
+  animation:tho-vang 7s ease-in-out infinite;
+}
+@keyframes tho-vang{
+  0%,100%{opacity:.8;transform:translate(-50%,-50%) scale(1)}
+  50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+}
+.trang i{position:absolute;border-radius:50%;background:#7a5f2f;opacity:.09;display:block}
 .trang i:nth-child(1){width:22%;height:22%;top:24%;left:22%}
 .trang i:nth-child(2){width:13%;height:13%;top:52%;left:56%}
 .trang i:nth-child(3){width:9%;height:9%;top:31%;left:62%}
@@ -100,7 +114,7 @@ body::before{
 
 .den-troi{position:absolute;width:9px;height:13px;border-radius:50% 50% 42% 42%;
   background:radial-gradient(circle at 50% 35%,var(--den-sang),var(--den-vang));
-  box-shadow:0 0 18px 5px rgba(246,185,94,.5);opacity:0;
+  box-shadow:0 0 20px 6px rgba(255,214,140,.6), 0 0 50px 16px rgba(246,185,94,.28);opacity:0;
   animation:hien-troi 2.4s ease forwards, troi 9s ease-in-out infinite 2.4s}
 @keyframes hien-troi{from{opacity:0;transform:translateY(70px)}to{opacity:.9;transform:translateY(0)}}
 @keyframes troi{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
@@ -154,7 +168,7 @@ body.vao .d4{transition-delay:2.3s}
 h1{
   font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:300;
   font-size:clamp(2.9rem,11vw,6.4rem);line-height:.98;letter-spacing:-.015em;
-  text-shadow:0 4px 60px rgba(6,9,24,.95), 0 0 24px rgba(6,9,24,.8);
+  text-shadow:0 4px 60px rgba(6,9,24,.95), 0 0 40px rgba(246,185,94,.45), 0 0 90px rgba(246,185,94,.25);
 }
 h1 .nho{display:block;font-style:normal;font-weight:200;
   font-size:clamp(.85rem,3vw,1.4rem);letter-spacing:.32em;text-transform:uppercase;
@@ -179,7 +193,7 @@ main{padding:0 22px 12vh}
 section{max-width:960px;margin:0 auto}
 .tua{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:300;
   font-size:clamp(1.75rem,5.4vw,3rem);text-align:center;
-  text-shadow:0 2px 30px rgba(6,9,24,.8)}
+  text-shadow:0 2px 30px rgba(6,9,24,.8), 0 0 46px rgba(246,185,94,.4)}
 .phu{text-align:center;color:var(--than);font-size:clamp(.85rem,2.4vw,.95rem);margin-top:.9rem}
 .ro{opacity:0;transform:translateY(30px);
   transition:opacity 1s ease,transform 1s cubic-bezier(.2,.7,.3,1)}
@@ -192,8 +206,12 @@ section{max-width:960px;margin:0 auto}
 @media(hover:hover){.nut-banh:hover{transform:translateY(-7px)}}
 .nut-banh:focus-visible{outline:1px solid var(--den-sang);outline-offset:14px;border-radius:8px}
 .nut-banh svg{width:min(360px,78vw);height:auto;display:block;
-  filter:drop-shadow(0 0 50px rgba(246,185,94,.45));transition:filter 1.6s ease}
-body.tat-nen .nut-banh svg{filter:drop-shadow(0 16px 34px rgba(0,0,0,.55))}
+  filter:drop-shadow(0 0 26px rgba(255,214,140,.65))
+         drop-shadow(0 0 70px rgba(246,185,94,.45))
+         drop-shadow(0 0 150px rgba(246,185,94,.28));
+  transition:filter 1.6s ease}
+body.tat-nen .nut-banh svg{
+  filter:drop-shadow(0 0 40px rgba(246,185,94,.18)) drop-shadow(0 16px 34px rgba(0,0,0,.55))}
 body.tat-nen .nut-banh{cursor:default;transform:none}
 .lua{transform-origin:50% 100%;animation:chap-chon .85s ease-in-out infinite alternate}
 @keyframes chap-chon{from{transform:scaleY(.88) scaleX(1.05)}to{transform:scaleY(1.1) scaleX(.94)}}
@@ -226,7 +244,9 @@ body.tat-nen .loi-uoc{opacity:1}
 @media(min-width:520px){.day-den{grid-template-columns:repeat(4,1fr)}}
 .den{background:none;border:0;padding:10px;cursor:pointer;
   transition:transform .35s ease,opacity .35s ease;
-  filter:drop-shadow(0 0 20px rgba(246,185,94,.5))}
+  filter:drop-shadow(0 0 14px rgba(255,214,140,.75))
+         drop-shadow(0 0 40px rgba(246,185,94,.5))
+         drop-shadow(0 0 90px rgba(246,185,94,.28))}
 .den .than{display:block;animation:lo-lung 4.5s ease-in-out infinite alternate}
 @keyframes lo-lung{from{transform:translateY(0)}to{transform:translateY(-9px)}}
 .den svg{width:clamp(50px,13vw,78px);height:auto;display:block}
@@ -252,7 +272,8 @@ body.du-den .khu-thu{opacity:1;transform:none;pointer-events:auto}
 .phong{
   display:block;margin:2.6rem auto 0;width:min(300px,72vw);aspect-ratio:1.6;
   background:linear-gradient(160deg,#F6EEDF,#E6D8C2);border:0;border-radius:4px;
-  position:relative;cursor:pointer;box-shadow:0 26px 60px rgba(0,0,0,.5);
+  position:relative;cursor:pointer;
+  box-shadow:0 26px 60px rgba(0,0,0,.5), 0 0 60px rgba(246,185,94,.35), 0 0 140px rgba(246,185,94,.18);
   transition:transform .5s ease,opacity .6s ease}
 .phong::before{content:"";position:absolute;inset:0;
   background:linear-gradient(#E0D0B6 0 0) no-repeat;
@@ -270,7 +291,8 @@ body.du-den .khu-thu{opacity:1;transform:none;pointer-events:auto}
 
 .thu{background:var(--giay);color:#2A2035;max-width:500px;margin:2.4rem auto 0;
   padding:clamp(1.5rem,5vw,2.6rem);border-radius:2px;transform:rotate(-.7deg) scale(.96);
-  box-shadow:0 34px 76px rgba(0,0,0,.55);position:relative;
+  box-shadow:0 34px 76px rgba(0,0,0,.55), 0 0 70px rgba(246,185,94,.32), 0 0 170px rgba(246,185,94,.16);
+  position:relative;
   opacity:0;visibility:hidden;transition:opacity 1s ease,transform 1s ease}
 .thu.hien-thu{opacity:1;visibility:visible;transform:rotate(-.7deg) scale(1)}
 .thu::before{content:"";position:absolute;top:-14px;left:50%;
@@ -286,7 +308,7 @@ body.du-den .khu-thu{opacity:1;transform:none;pointer-events:auto}
 /* ảnh dán trong thư */
 .anh-thu{
   display:block;width:min(200px,56%);margin:0 auto 1.8rem;padding:9px 9px 12px;
-  background:#fff;box-shadow:0 14px 30px rgba(0,0,0,.28);
+  background:#fff;box-shadow:0 14px 30px rgba(0,0,0,.28), 0 0 44px rgba(246,185,94,.45);
   transform:rotate(-2.4deg);cursor:zoom-in;position:relative;
   transition:transform .4s ease}
 .anh-thu::before{content:"";position:absolute;top:-13px;left:50%;
@@ -486,14 +508,14 @@ const CAU_HINH = {
 
   // Để "" thì trang tự chơi nhạc hộp nhạc do trang tạo ra.
   // Muốn bài riêng: để file mp3 cạnh file HTML rồi ghi "bai-hat.mp3"
-  fileNhac: "",
+  fileNhac: "sinh-nhat.mp3",
 
   dieuUoc: [
     "Cảm ơn em vì đã ở đây, kể cả những hôm anh chẳng dễ thương chút nào.",
     "Anh thích cách em cười khi em quên mất là có người đang nhìn.",
     "Em làm những ngày rất bình thường của anh trở nên đáng nhớ.",
     "Anh nhớ em cả những lúc em vừa mới rời đi được năm phút.",
-    "Em là người đầu tiên anh muốn bảo vệ <3.",
+    "Yêu em yêu cả dáng hình khi em không hoàn hảo.",
     "Anh tự hào về em hơn cả những gì anh nói ra được.",
     "Dù sau này đi đâu, anh vẫn muốn về phía có em.",
     "Chúc em một tuổi mới thật nhiều điều tốt lành, và có anh ở trong đó."
