@@ -362,6 +362,25 @@ body.co-nhac .song span:nth-child(4){animation-delay:.15s}
   pointer-events:none;transition:opacity .5s ease,transform .5s ease}
 #mach.hien-mach{opacity:1;transform:none}
 
+/* ============================================================
+   MÁY YẾU — cắt các hiệu ứng nặng (blur, box-shadow lớn,
+   drop-shadow bán kính lớn) để không crash khi scroll.
+   Bật tự động khi phát hiện máy yếu, hoặc thêm ?nhe vào URL.
+   ============================================================ */
+body.may-yeu #may{display:none}                 /* mây blur 42px: rất tốn */
+body.may-yeu #sao-bang{display:none}            /* sao băng */
+body.may-yeu .trang{                            /* trăng: bỏ shadow spread ~400px */
+  box-shadow:0 0 60px 12px rgba(246,200,120,.28),
+             0 0 130px 46px rgba(246,185,94,.12);
+}
+body.may-yeu .trang::after{animation:none;opacity:.72}
+body.may-yeu .nut-banh svg{                     /* bánh: drop-shadow 150px -> 34px */
+  filter:drop-shadow(0 0 34px rgba(255,214,140,.5))}
+body.may-yeu .den{                              /* đèn: bỏ lớp drop-shadow 90px */
+  filter:drop-shadow(0 0 14px rgba(255,214,140,.72))
+         drop-shadow(0 0 34px rgba(246,185,94,.38))}
+body.may-yeu .phong,body.may-yeu .thu{backdrop-filter:none}
+
 /* ---------- Responsive tinh chỉnh ---------- */
 @media(max-width:640px){
   .trang{top:6vh;right:auto;left:50%;transform:translateX(-50%);
@@ -533,6 +552,27 @@ const CAU_HINH = {
 
 const rm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const nho = innerWidth < 640;
+
+/* ============================================================
+   PHÁT HIỆN MÁY YẾU
+   - Tự bật khi RAM thấp / ít nhân CPU / trình duyệt cũ.
+   - Ép bật: thêm ?nhe vào cuối URL (vd ...sinh-nhat.html?nhe)
+   - Ép tắt: thêm ?day-du  (nếu muốn giữ full hiệu ứng)
+   ============================================================ */
+const yeuMay = (function(){
+  try{
+    if (/[?&]day-du\b/.test(location.search)) return false;
+    if (/[?&]nhe\b/.test(location.search) || location.hash === "#nhe") return true;
+    const mem = navigator.deviceMemory;          // GB, thường cap ở 8
+    const cpu = navigator.hardwareConcurrency;    // số nhân
+    if (mem && mem <= 3) return true;             // máy RAM thấp
+    if (cpu && cpu <= 4) return true;             // CPU ít nhân (đa số máy cũ)
+    if (!mem && !cpu) return true;                // trình duyệt quá cũ -> cứ nhẹ cho chắc
+    return false;
+  }catch(e){ return true; }
+})();
+if (yeuMay) document.body.classList.add("may-yeu");
+
 const ngaySinh = new Date(CAU_HINH.ngaySinh);
 
 /* ---------- Nội dung ---------- */
@@ -564,7 +604,8 @@ if (CAU_HINH.ngayQuen) {
 
 /* ---------- Sao, mây, đom đóm ---------- */
 const oSao = document.getElementById("sao");
-for (let i = 0; i < (nho ? 90 : 170); i++) {
+const soSao = yeuMay ? 40 : (nho ? 90 : 170);
+for (let i = 0; i < soSao; i++) {
   const s = document.createElement("div");
   s.className = "sao";
   const d = Math.random() * 1.9 + .5;
@@ -573,18 +614,22 @@ for (let i = 0; i < (nho ? 90 : 170); i++) {
   if (rm) s.style.animation = "none";
   oSao.appendChild(s);
 }
+// mây blur rất tốn -> máy yếu bỏ hẳn (đã display:none trong CSS, đây khỏi tạo DOM)
 const oMay = document.getElementById("may");
-for (let i = 0; i < 4; i++) {
-  const m = document.createElement("div");
-  m.className = "may";
-  const w = 260 + Math.random() * 320;
-  m.style.cssText = `width:${w}px;height:${w*.42}px;top:${Math.random()*60}%;
-    animation-duration:${90+Math.random()*70}s;animation-delay:${-Math.random()*80}s`;
-  if (rm) m.style.animation = "none";
-  oMay.appendChild(m);
+if (!yeuMay) {
+  for (let i = 0; i < 4; i++) {
+    const m = document.createElement("div");
+    m.className = "may";
+    const w = 260 + Math.random() * 320;
+    m.style.cssText = `width:${w}px;height:${w*.42}px;top:${Math.random()*60}%;
+      animation-duration:${90+Math.random()*70}s;animation-delay:${-Math.random()*80}s`;
+    if (rm) m.style.animation = "none";
+    oMay.appendChild(m);
+  }
 }
 const oDom = document.getElementById("dom-dom");
-for (let i = 0; i < (nho ? 10 : 18); i++) {
+const soDom = yeuMay ? 5 : (nho ? 10 : 18);
+for (let i = 0; i < soDom; i++) {
   const d = document.createElement("div");
   d.className = "dom";
   d.style.cssText = `left:${Math.random()*100}%;bottom:${Math.random()*24}%;
@@ -596,7 +641,7 @@ for (let i = 0; i < (nho ? 10 : 18); i++) {
 /* sao băng */
 const oBang = document.getElementById("sao-bang");
 function saoBang() {
-  if (rm) return;
+  if (rm || yeuMay) return;
   const v = document.createElement("div");
   v.className = "vach";
   v.style.left = (Math.random() * 50) + "%";
@@ -608,10 +653,13 @@ function saoBang() {
 }
 
 /* ---------- Parallax ---------- */
+/* Đây là thủ phạm chính gây crash khi scroll trên máy cũ:
+   dịch mặt trăng có box-shadow rất lớn -> repaint mỗi frame.
+   Máy yếu: tắt hoàn toàn parallax. */
 const oTrang = document.getElementById("trang"), oRung = document.querySelector("#rung svg");
 let tick = false;
 addEventListener("scroll", () => {
-  if (rm || tick) return;
+  if (rm || yeuMay || tick) return;
   tick = true;
   requestAnimationFrame(() => {
     const y = scrollY;
@@ -802,7 +850,7 @@ document.getElementById("nut-banh").addEventListener("click", function(){
 }, { once: true });
 
 function bungBui(el){
-  if (rm) return;
+  if (rm || yeuMay) return;   // hiệu ứng bụi vàng: máy yếu bỏ cho nhẹ
   const r = el.getBoundingClientRect(), x0 = r.left + r.width/2, y0 = r.top + r.height*.28;
   for (let i = 0; i < 26; i++){
     const p = document.createElement("div");
